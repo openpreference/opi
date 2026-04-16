@@ -1,0 +1,5 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Read the specifications first
+    url: https://github.com/openpreference/opi/tree/main/specs
+    about: The three core specifications live here. Please read the relevant one before filing an issue.

@@ -1,0 +1,52 @@
+# macOS
+.DS_Store
+._*
+.Spotlight-V100
+.Trashes
+.fseventsd
+.VolumeIcon.icns
+.AppleDouble
+.LSOverride
+
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+
+# Linux
+*~
+.directory
+.Trash-*
+
+# Editor and IDE noise
+.vscode/
+.idea/
+*.swp
+*.swo
+*.swn
+*.iml
+.project
+.settings/
+.classpath
+.obsidian/
+.obsidian.vimrc
+
+# Temp and backup files
+*.bak
+*.tmp
+*.orig
+*.rej
+
+# Environment files
+.env
+.env.local
+.env.*.local
+
+# Build and output directories
+dist/
+build/
+out/
+site/
+_site/
+.cache/
