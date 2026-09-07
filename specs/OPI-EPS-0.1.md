@@ -93,17 +93,23 @@ Contact preferences SHOULD map to types defined in [schema.org ContactPoint] whe
 
 ### 8.1 Schema version
 
-The `schema` member identifies the major version of the EPS document format. Minor and patch revisions to the format MUST NOT change the URI if they remain backward-compatible for consumers. Breaking changes MUST change the URI.
+The `schema` member carries the major and minor version of this document, and changes with each published minor or major version. Patch versions of this document do not change the `schema` URI.
+
+Before version 1.0, each minor version is a distinct format and consumers MUST NOT assume compatibility between `schema` URIs. From version 1.0, minor versions MUST be backward compatible: a consumer that supports `https://openpreference.org/eps/1.N` MUST accept any bundle whose `schema` is `https://openpreference.org/eps/1.M` where M is less than or equal to N, and MUST ignore members it does not recognize. Major versions are not compatible with one another.
 
 ### 8.2 Element version
 
-Each element's `version` member identifies the version of the referenced type definition. Element definitions MUST follow [SemVer]. Producers MUST emit the highest version they support for a given type. Consumers MUST accept any version at or below the latest version they support, and MAY ignore elements whose version they do not recognize.
+Each element's `version` member identifies the version of the type definition referenced by `type`. Type definitions MUST be versioned per [SemVer]: a major version change indicates an incompatible change to the value type or semantics, a minor version change adds optional structure without breaking existing consumers, and a patch version change is editorial.
+
+Producers MUST emit the highest version they support for a given type. A consumer MUST accept an element when its major version matches a major version the consumer supports for that type and its minor and patch versions are at or below the highest the consumer supports. A consumer MAY accept a higher minor version of a supported major version and MUST ignore any structure it does not recognize. A consumer MUST ignore an element whose major version it does not support, and MUST NOT reject the bundle on that account.
 
 ## 9. Signing
 
 ### 9.1 JWT envelope
 
 A signed bundle is a JWT per [RFC 7519] whose Claims Set is the preference bundle. It MUST use JWS compact serialization per [RFC 7515] Section 7.1. The JOSE header MUST include `alg` (which MUST NOT be `none`), `kid`, and `typ` with the value `opi-eps+jwt` per [RFC 8725] Section 3.11.
+
+Producers MUST use an asymmetric algorithm; symmetric `alg` values are prohibited because verification keys are published (Section 9.3). Producers MUST support `ES256` per [RFC 7518]. Consumers MUST support `ES256` and MAY support `EdDSA` per [RFC 8037]. Consumers MUST reject bundles using any `alg` they do not support.
 
 ### 9.2 Replay protection
 
@@ -186,8 +192,10 @@ EPS does not specify access control; that is the responsibility of [OPI-PD]. Pro
 - [RFC 3339] Date and Time on the Internet: Timestamps
 - [RFC 7515] JSON Web Signature (JWS)
 - [RFC 7517] JSON Web Key (JWK)
+- [RFC 7518] JSON Web Algorithms (JWA)
 - [RFC 7519] JSON Web Token (JWT)
 - [RFC 7565] The 'acct' URI Scheme
+- [RFC 8037] CFRG Elliptic Curve Diffie-Hellman (ECDH) and Signatures in JSON Object Signing and Encryption (JOSE)
 - [RFC 8174] Ambiguity of Uppercase vs Lowercase in RFC 2119 Key Words
 - [RFC 8725] JSON Web Token Best Current Practices
 - [SemVer] Semantic Versioning 2.0.0
