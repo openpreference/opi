@@ -59,7 +59,7 @@ Servers MAY accept additional URI schemes. Servers MUST respond with HTTP 404 fo
 
 Requestors discover a subject's preference resource by issuing an HTTPS GET request per [RFC 7033]:
 
-```
+```http
 GET /.well-known/webfinger?resource={uri}&rel=https://openpreference.org/rel/preferences
 Host: {host}
 ```
@@ -94,6 +94,8 @@ The public tier serves preferences the subject has marked available to any reque
 
 The client tier serves preferences the subject has authorized for release to requestors whose identity is verified. Retrieval requires the requestor to present a credential obtained via OAuth 2.0 Client Credentials grant per [RFC 6749]. Preference servers MAY further restrict access based on verified attributes from a trust registry as specified in [OPI-TRUST].
 
+A preference server MUST record a purpose statement for each client at registration time, in the same form as the `purpose` member in Section 8.1. The registered purpose applies to every client-tier request the client makes and MUST be available to the subject through the audit interface described in Section 13.
+
 ### 6.3 User tier
 
 The user tier serves preferences that require explicit user authorization, either per request or under a standing policy. Retrieval requires an access token issued by the authorization server advertised at the `https://openpreference.org/rel/auth` link, obtained through one of the two profiles defined in Section 8. Preference servers MUST support at least one profile and MUST advertise which profiles they support per Section 8.4.
@@ -104,20 +106,32 @@ The user tier serves preferences that require explicit user authorization, eithe
 
 Requestors retrieve preferences by issuing an HTTPS GET request to the `href` returned in the discovery document:
 
-```
-GET {href}?scopes={scope_list}
+```http
+GET {href}?types={type_list}
 Authorization: {auth_scheme} {credential}
 ```
 
-The `scopes` query parameter, if present, is a comma-separated list of preference type URIs. A server receiving no `scopes` parameter MUST return all preferences the requestor is entitled to receive at its authenticated tier.
+The `types` query parameter, if present, is a space-separated list of preference type URIs, percent-encoded per [RFC 3986]. A server receiving no `types` parameter MUST return all preferences the requestor is entitled to receive at its authenticated tier (Section 7.4).
 
 ### 7.2 Response
 
-The response body MUST be a JWS-wrapped EPS bundle per [OPI-EPS]. The `Content-Type` header MUST be `application/opi-eps+jwt`.
+The response body MUST be a signed bundle per [OPI-EPS] Section 9.1. The `Content-Type` header MUST be `application/opi-eps+jwt`.
 
-### 7.3 Scope filtering
+### 7.3 Type filtering
 
-The server MUST return only preferences matching the requested scopes that the requestor is entitled to receive at its authenticated tier. The server MUST NOT return preferences outside the requested scopes.
+The server MUST return only preferences whose `type` is both listed in the `types` parameter, if present, and within the requestor's entitlement at its authenticated tier (Section 7.4). The server MUST NOT return preferences outside the requested types.
+
+### 7.4 Entitlement
+
+The set of preference types a requestor is entitled to receive is determined by tier.
+
+| Tier | Entitlement |
+|------|-------------|
+| Public | Every preference the subject has marked available to any requestor. |
+| Client | The intersection of the preferences the subject has authorized for release to verified requestors and the OAuth 2.0 `scope` values granted to the client's access token. Each `scope` value is one preference type URI. |
+| User | The `preference_types` member of the `authorization_details` bound to the access token (Section 8.1). |
+
+The `types` query parameter narrows the response within the entitlement and MUST NOT expand it. A request whose `types` include a type outside the requestor's entitlement MUST be answered with the entitled subset rather than an error, so that the response does not reveal which types exist.
 
 ## 8. User-Tier Authorization
 
@@ -140,7 +154,7 @@ The requestor obtains an access token using the authorization code grant per [RF
 
 ### 8.3 UMA profile
 
-The preference server acts as an UMA resource server and the authorization server acts as an UMA authorization server per [UMA 2.0] and [UMA FedAuthz].
+The preference server acts as a UMA resource server and the authorization server acts as a UMA authorization server per [UMA 2.0] and [UMA FedAuthz].
 
 1. The preference server MUST register each subject's preference resource with the authorization server, using the preference type URIs it can serve as the `resource_scopes`.
 2. A user-tier request that lacks a sufficient token MUST receive HTTP 401 with a `WWW-Authenticate: UMA` header carrying `as_uri` and a permission ticket, per [UMA 2.0] Section 3.2.1.
@@ -169,7 +183,7 @@ Preference servers MUST NOT distinguish between "subject exists but has no prefe
 
 ### 11.1 Discovery request
 
-```
+```http
 GET /.well-known/webfinger?resource=acct:alice@example.com&rel=https://openpreference.org/rel/preferences
 Host: example.com
 ```
@@ -204,8 +218,8 @@ Host: example.com
 
 ### 11.3 Public-tier retrieval
 
-```
-GET /opi/preferences/alice?scopes=https://openpreference.org/eps/0.1/types/locale
+```http
+GET /opi/preferences/alice?types=https%3A%2F%2Fopenpreference.org%2Feps%2F0.1%2Ftypes%2Flocale
 Host: example.com
 ```
 
@@ -232,7 +246,7 @@ All requests and responses MUST use TLS. Preference servers MUST validate client
 
 ## 13. Privacy Considerations
 
-Preference servers MUST log all non-public-tier requests with sufficient detail to support user-facing audit, including requestor identity, requested scopes, stated purpose, and timestamp. Servers SHOULD provide a user interface for reviewing, modifying, and revoking standing authorizations. Logs MUST be retained in accordance with applicable law.
+Preference servers MUST log all non-public-tier requests with sufficient detail to support user-facing audit, including requestor identity, requested scopes, purpose (the registered purpose for client-tier requests, or the purpose member for user-tier requests), and timestamp. Servers SHOULD provide a user interface for reviewing, modifying, and revoking standing authorizations. Logs MUST be retained in accordance with applicable law.
 
 ## 14. References
 
@@ -242,6 +256,7 @@ Preference servers MUST log all non-public-tier requests with sufficient detail 
 - [OPI-TRUST] Open Preference Initiative: Trust Registry, version 0.1
 - [ISO 8601] Date and time, Representations for information interchange
 - [RFC 2119] Key words for use in RFCs to Indicate Requirement Levels
+- [RFC 3986] Uniform Resource Identifier (URI): Generic Syntax
 - [RFC 6749] The OAuth 2.0 Authorization Framework
 - [RFC 7033] WebFinger
 - [RFC 7515] JSON Web Signature (JWS)
@@ -253,5 +268,3 @@ Preference servers MUST log all non-public-tier requests with sufficient detail 
 - [RFC 9396] OAuth 2.0 Rich Authorization Requests
 - [UMA 2.0] User-Managed Access 2.0 Grant for OAuth 2.0 Authorization, Kantara Initiative
 - [UMA FedAuthz] User-Managed Access 2.0 Federated Authorization for UMA 2.0, Kantara Initiative
-
-
