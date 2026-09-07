@@ -46,9 +46,10 @@ A subject is identified by a URI passed as the WebFinger `resource` parameter. C
 
 | Form | Example | Semantics |
 |------|---------|-----------|
-| `acct:` with local part | `acct:alice@example.com` | Preferences of an individual account. |
-| `acct:` without local part | `acct:@example.com` | Preferences of the organization represented by the domain. |
-| `https:` URI at domain root | `https://example.com` | Equivalent to `acct:@example.com`. |
+| `acct:` URI per [RFC 7565] | `acct:alice@example.com` | Preferences of an individual account. |
+| `https:` URI at domain root | `https://example.com` | Preferences of the organization represented by the domain. |
+
+The userpart of an `acct:` URI MUST be non-empty, as required by [RFC 7565]. Servers SHOULD treat an `https:` subject with and without a trailing slash as the same subject.
 
 Servers MAY accept additional URI schemes. Servers MUST respond with HTTP 404 for any `resource` value they do not recognize, subject to Section 10.
 
@@ -63,21 +64,25 @@ GET /.well-known/webfinger?resource={uri}&rel=https://openpreference.org/rel/pre
 Host: {host}
 ```
 
-The `host` is the authority component of the `resource` URI.
+The `host` is the host part of an `acct:` URI, or the host of an `https:` URI.
 
 ### 5.2 Discovery document
 
-The response body MUST be a JSON Resource Descriptor per [RFC 7033]. The document MUST contain at least one `links` entry whose `rel` member is `https://openpreference.org/rel/preferences`.
+The response body MUST be a JSON Resource Descriptor per [RFC 7033], served with the `application/jrd+json` media type. The document MUST contain the link relations in Section 5.3.
 
-### 5.3 Link properties
+### 5.3 Link relations
 
-Each preference link in the JRD MUST include the following `properties`.
+| Link relation | Required | `type` | Description |
+|---------------|----------|--------|-------------|
+| `https://openpreference.org/rel/preferences` | yes | `application/opi-eps+jwt` | The subject's preference resource (Section 7). |
+| `https://openpreference.org/rel/keys` | yes | `application/jwk-set+json` | JWK Set per [RFC 7517] used to verify preference bundle signatures. |
+| `https://openpreference.org/rel/auth` | conditional | `application/json` | OAuth 2.0 authorization server metadata per [RFC 8414]. REQUIRED if the preferences link supports the `client` or `user` tier. |
 
-| Property URI | Value | Description |
-|--------------|-------|-------------|
-| `https://openpreference.org/pd/0.1/tiers` | JSON-encoded array of strings | Access tiers supported at this `href`. Permitted values: `public`, `client`, `user`. |
-| `https://openpreference.org/pd/0.1/auth` | string | URL of the OAuth 2.0 authorization server metadata document per [RFC 8414]. REQUIRED if `client` or `user` tier is supported. |
-| `https://openpreference.org/pd/0.1/jwks` | string | URL of the JWK Set per [RFC 7517] used to sign preference bundles. |
+The preferences link MUST carry the following property. Property values are strings, as required by [RFC 7033] Section 4.4.4.5.
+
+| Property URI | Value | Required | Description |
+|--------------|-------|----------|-------------|
+| `https://openpreference.org/pd/0.1/tiers` | string | yes | Space-separated list of access tiers supported at this `href`. Permitted tokens: `public`, `client`, `user`. Order is not significant. |
 
 ## 6. Access Tiers
 
@@ -157,11 +162,20 @@ Host: example.com
     {
       "rel": "https://openpreference.org/rel/preferences",
       "href": "https://example.com/opi/preferences/alice",
+      "type": "application/opi-eps+jwt",
       "properties": {
-        "https://openpreference.org/pd/0.1/tiers": ["public", "client", "user"],
-        "https://openpreference.org/pd/0.1/auth": "https://example.com/.well-known/oauth-authorization-server",
-        "https://openpreference.org/pd/0.1/jwks": "https://example.com/.well-known/opi-keys.json"
+        "https://openpreference.org/pd/0.1/tiers": "public client user"
       }
+    },
+    {
+      "rel": "https://openpreference.org/rel/keys",
+      "href": "https://example.com/.well-known/opi-keys.json",
+      "type": "application/jwk-set+json"
+    },
+    {
+      "rel": "https://openpreference.org/rel/auth",
+      "href": "https://example.com/.well-known/oauth-authorization-server",
+      "type": "application/json"
     }
   ]
 }
@@ -213,6 +227,7 @@ Preference servers MUST log all non-public-tier requests with sufficient detail 
 - [RFC 8174] Ambiguity of Uppercase vs Lowercase in RFC 2119 Key Words
 - [RFC 8414] OAuth 2.0 Authorization Server Metadata
 - [RFC 9396] OAuth 2.0 Rich Authorization Requests
+- [RFC 7565] The 'acct' URI Scheme
 
 ### 14.2 Informative
 
