@@ -96,7 +96,7 @@ The client tier serves preferences the subject has authorized for release to req
 
 ### 6.3 User tier
 
-The user tier serves preferences that require explicit user authorization, either per request or under a standing policy. Retrieval requires the requestor to present an access token obtained via OAuth 2.0 Rich Authorization Requests per [RFC 9396] or User-Managed Access 2.0 per [UMA 2.0].
+The user tier serves preferences that require explicit user authorization, either per request or under a standing policy. Retrieval requires an access token issued by the authorization server advertised at the `https://openpreference.org/rel/auth` link, obtained through one of the two profiles defined in Section 8. Preference servers MUST support at least one profile and MUST advertise which profiles they support per Section 8.4.
 
 ## 7. Retrieval
 
@@ -119,16 +119,37 @@ The response body MUST be a JWS-wrapped EPS bundle per [OPI-EPS]. The `Content-T
 
 The server MUST return only preferences matching the requested scopes that the requestor is entitled to receive at its authenticated tier. The server MUST NOT return preferences outside the requested scopes.
 
-## 8. Rich Authorization Requests
+## 8. User-Tier Authorization
 
-User-tier access MUST use Rich Authorization Requests per [RFC 9396]. Each `authorization_details` object MUST include the following members.
+### 8.1 Authorization details
+
+Both profiles convey the request using an `authorization_details` object per [RFC 9396]. Each object MUST include the following members.
 
 | Member | Type | Required | Description |
 |--------|------|----------|-------------|
 | `type` | string | yes | Fixed value `https://openpreference.org/pd/0.1/authorization_details`. |
 | `preference_types` | array of strings | yes | Requested preference type URIs. |
 | `purpose` | string | yes | Human-readable purpose string displayed to the user during consent. |
-| `retention` | string | yes | ISO 8601 duration indicating the maximum period the requestor will retain the preferences. |
+| `retention` | string | yes | Duration per [ISO 8601] indicating the maximum period the requestor will retain the preferences. |
+
+The authorization server MUST present `purpose` and `retention` to the user whenever it obtains consent interactively, and MUST evaluate them against the user's standing policy when consent is not interactive. Access tokens issued under either profile MUST be bound to the granted `authorization_details`, and preference servers MUST enforce `preference_types` as the upper bound on what the token can retrieve (Section 7.3).
+
+### 8.2 RAR profile
+
+The requestor obtains an access token using the authorization code grant per [RFC 6749], including the `authorization_details` parameter in the authorization request per [RFC 9396] Section 3. Public clients MUST use PKCE per [RFC 7636].
+
+### 8.3 UMA profile
+
+The preference server acts as an UMA resource server and the authorization server acts as an UMA authorization server per [UMA 2.0] and [UMA FedAuthz].
+
+1. The preference server MUST register each subject's preference resource with the authorization server, using the preference type URIs it can serve as the `resource_scopes`.
+2. A user-tier request that lacks a sufficient token MUST receive HTTP 401 with a `WWW-Authenticate: UMA` header carrying `as_uri` and a permission ticket, per [UMA 2.0] Section 3.2.1.
+3. The requestor MUST request a requesting party token at the token endpoint with `grant_type` set to `urn:ietf:params:oauth:grant-type:uma-ticket`, the `ticket`, and the `authorization_details` parameter per [RFC 9396] Section 6 carrying the object in Section 8.1. The `preference_types` MUST be a subset of the scopes named in the permission ticket.
+4. The authorization server MUST obtain the resource owner's consent through claims gathering or standing policy as described in Section 8.1, and MUST record `purpose` and `retention` with the granted permission.
+
+### 8.4 Metadata
+
+The authorization server metadata document referenced from the `https://openpreference.org/rel/auth` link MUST include `authorization_details_types_supported` containing `https://openpreference.org/pd/0.1/authorization_details`, per [RFC 9396] Section 10. A server supporting the UMA profile MUST publish the UMA discovery members defined in [UMA FedAuthz] in the same document, which extends [RFC 8414].
 
 ## 9. Rate Limiting
 
@@ -219,16 +240,18 @@ Preference servers MUST log all non-public-tier requests with sufficient detail 
 
 - [OPI-EPS] Open Preference Initiative: Extensible Preference Schema, version 0.1
 - [OPI-TRUST] Open Preference Initiative: Trust Registry, version 0.1
+- [ISO 8601] Date and time, Representations for information interchange
 - [RFC 2119] Key words for use in RFCs to Indicate Requirement Levels
 - [RFC 6749] The OAuth 2.0 Authorization Framework
 - [RFC 7033] WebFinger
 - [RFC 7515] JSON Web Signature (JWS)
 - [RFC 7517] JSON Web Key (JWK)
+- [RFC 7565] The 'acct' URI Scheme
+- [RFC 7636] Proof Key for Code Exchange by OAuth Public Clients
 - [RFC 8174] Ambiguity of Uppercase vs Lowercase in RFC 2119 Key Words
 - [RFC 8414] OAuth 2.0 Authorization Server Metadata
 - [RFC 9396] OAuth 2.0 Rich Authorization Requests
-- [RFC 7565] The 'acct' URI Scheme
-
-### 14.2 Informative
-
 - [UMA 2.0] User-Managed Access 2.0 Grant for OAuth 2.0 Authorization, Kantara Initiative
+- [UMA FedAuthz] User-Managed Access 2.0 Federated Authorization for UMA 2.0, Kantara Initiative
+
+
