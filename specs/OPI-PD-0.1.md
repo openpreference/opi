@@ -246,7 +246,7 @@ All requests and responses MUST use TLS. Preference servers MUST validate client
 
 ## 13. Privacy Considerations
 
-Preference servers MUST log all non-public-tier requests with sufficient detail to support user-facing audit, including requestor identity, requested scopes, purpose (the registered purpose for client-tier requests, or the purpose member for user-tier requests), and timestamp. Servers SHOULD provide a user interface for reviewing, modifying, and revoking standing authorizations. Logs MUST be retained in accordance with applicable law.
+Preference servers MUST log all non-public-tier requests with sufficient detail to support user-facing audit, including requestor identity, requested types, purpose (the registered purpose for client-tier requests, or the purpose member for user-tier requests), and timestamp. Servers SHOULD provide a user interface for reviewing, modifying, and revoking standing authorizations. Logs MUST be retained in accordance with applicable law.
 
 ## 14. References
 
