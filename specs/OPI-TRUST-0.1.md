@@ -65,7 +65,7 @@ A verification entry is a JSON object with the following members.
 | `entity` | string | yes | URI identifying the verified requestor. Typically an HTTPS URL identifying the requestor's primary domain. |
 | `client_id` | string | no | OAuth 2.0 `client_id` associated with the entity, where applicable. |
 | `verifications` | array | yes | Array of verification records (Section 6). |
-| `revoked` | boolean | no | If true, all prior verifications for this entity are revoked. Default false. Only permitted in an entry whose verifications array is empty when the enclosing list has kind set to delta. |
+| `revoked` | boolean | no | If true, all prior verifications for this entity are revoked. Default false. Only permitted in an entry whose `verifications` array is empty, within a list whose `kind` is `delta`. |
 
 ## 6. Verification Record
 
@@ -147,6 +147,7 @@ A subscriber MUST apply a delta only when it holds the full list whose `issued` 
 ```json
 {
   "schema": "https://openpreference.org/trust/0.1",
+  "kind": "full",
   "registry": "https://openpreference.org/registry/default",
   "issued": "2026-04-16T00:00:00Z",
   "expires": "2026-04-23T00:00:00Z",
@@ -182,9 +183,11 @@ A subscriber MUST apply a delta only when it holds the full list whose `issued` 
 ```json
 {
   "schema": "https://openpreference.org/trust/0.1",
+  "kind": "delta",
+  "base": "2026-04-16T00:00:00Z",
   "registry": "https://openpreference.org/registry/default",
   "issued": "2026-04-16T12:00:00Z",
-  "expires": "2026-04-23T12:00:00Z",
+  "expires": "2026-04-23T00:00:00Z",
   "entries": [
     {
       "entity": "https://partner-restaurant.example",
