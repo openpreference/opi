@@ -47,6 +47,8 @@ A trust list is a JSON object with the following members.
 | Member | Type | Required | Description |
 |--------|------|----------|-------------|
 | `schema` | string | yes | Absolute URI identifying the trust list schema version. For this document: `https://openpreference.org/trust/0.1`. |
+| `kind` | string | yes | Either `full` or `delta`. |
+| `base` | string | conditional | REQUIRED when `kind` is `delta`. The `issued` timestamp of the full list this delta amends. MUST NOT be present when `kind` is `full`. |
 | `registry` | string | yes | URI identifying the issuing registry. |
 | `issued` | string | yes | RFC 3339 timestamp of list generation. |
 | `expires` | string | yes | RFC 3339 timestamp after which the list is stale. |
@@ -63,7 +65,7 @@ A verification entry is a JSON object with the following members.
 | `entity` | string | yes | URI identifying the verified requestor. Typically an HTTPS URL identifying the requestor's primary domain. |
 | `client_id` | string | no | OAuth 2.0 `client_id` associated with the entity, where applicable. |
 | `verifications` | array | yes | Array of verification records (Section 6). |
-| `revoked` | boolean | no | If true, all prior verifications for this entity are revoked. Default false. |
+| `revoked` | boolean | no | If true, all prior verifications for this entity are revoked. Default false. Only permitted in an entry whose verifications array is empty when the enclosing list has kind set to delta. |
 
 ## 6. Verification Record
 
@@ -108,7 +110,7 @@ Asserts that the named entity holds a specific compliance attestation. The final
 
 ### 8.1 List distribution
 
-A registry MUST publish its current trust list at a stable HTTPS URL. The URL MAY be advertised via WebFinger or distributed out-of-band.
+A registry MUST publish its current trust list at a stable HTTPS URL. The URL MAY be advertised via WebFinger or distributed out-of-band. A registry that publishes deltas MUST publish them at a stable HTTPS URL distinct from the full list URL, so that subscribers can poll for deltas without re-downloading the full list.
 
 ### 8.2 Freshness
 
@@ -126,9 +128,17 @@ Registries MUST rotate signing keys on a defined schedule and MUST publish key r
 
 ## 10. Revocation
 
-Registries MUST republish trust lists with updated `issued` timestamps whenever entries are added, modified, or revoked. Subscribers MUST apply the most recent list they hold.
+### 10.1 Full lists
 
-Registries MAY publish revocations as delta documents with the same schema, where the `entries` array contains only revoked entities with `revoked` set to true. Delta documents MUST be signed.
+Registries MUST republish a full trust list, with `kind` set to `full` and a new `issued` timestamp, whenever entries are added, modified, or revoked.
+
+### 10.2 Delta lists
+
+Between full publications, a registry MAY publish a delta list with `kind` set to `delta` and `base` set to the `issued` timestamp of the full list it amends. A delta's `entries` array MUST contain only entities with `revoked` set to true and an empty `verifications` array. Deltas MUST NOT add or modify verifications. A delta's `expires` MUST NOT be later than the `expires` of its base list. Delta lists MUST be signed per Section 9.
+
+### 10.3 Subscriber processing
+
+A subscriber MUST apply a delta only when it holds the full list whose `issued` equals the delta's `base`. If it does not, it MUST fetch the current full list instead. A delta amends its base list and never replaces it. Subscribers MUST apply deltas in `issued` order and MUST treat an entity revoked by any applied delta as revoked until a full list with a later `issued` is applied.
 
 ## 11. Examples (non-normative)
 
