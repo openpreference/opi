@@ -14,7 +14,7 @@ OPI is in early draft. All specifications are at version 0.1 and are open for co
 | [OPI-PD](specs/OPI-PD-0.1.md) | Preference Discoverability | 0.1 | Draft |
 | [OPI-TRUST](specs/OPI-TRUST-0.1.md) | Trust Registry | 0.1 | Draft |
 
-**OPI-EPS** defines the JSON bundle format, preference element structure, and versioning rules. It aligns with existing vocabularies (FHIR, BCP 47, ISO 4217, ISO 80000, schema.org) where those already cover the domain.
+**OPI-EPS** defines the JSON bundle format, preference element structure, and versioning rules. It aligns with existing vocabularies (FHIR, BCP 47, ISO 4217, UCUM, IANA Time Zones, schema.org) where those already cover the domain.
 
 **OPI-PD** defines how a requestor discovers a subject's preference resource using WebFinger, and how preferences are retrieved under one of three access tiers: public, client, or user. User-tier access uses OAuth 2.0 Rich Authorization Requests or UMA 2.0.
 
