@@ -47,10 +47,13 @@ An EPS preference bundle is a JSON object with the following members.
 | Member | Type | Required | Description |
 |--------|------|----------|-------------|
 | `schema` | string | yes | Absolute URI identifying the EPS schema version. |
-| `subject` | string | yes | URI identifying the subject of the bundle. |
-| `issued` | string | yes | RFC 3339 timestamp of bundle generation. |
-| `expires` | string | no | RFC 3339 timestamp after which the bundle is no longer valid. |
+| `iss` | string | yes | HTTPS origin of the preference server that produced the bundle, per [RFC 7519] Section 4.1.1. |
+| `sub` | string | yes | URI identifying the subject of the bundle, per [RFC 7519] Section 4.1.2. |
+| `iat` | number | yes | NumericDate of bundle generation, per [RFC 7519] Section 4.1.6. |
+| `exp` | number | yes | NumericDate after which the bundle is no longer valid, per [RFC 7519] Section 4.1.4. |
 | `preferences` | array | yes | Array of preference elements (Section 5). |
+
+A preference bundle is a JWT Claims Set per [RFC 7519]. `schema` and `preferences` are private claim names per [RFC 7519] Section 4.3.
 
 The `schema` member for this version MUST be `https://openpreference.org/eps/0.1`.
 
@@ -64,7 +67,7 @@ A preference element is a JSON object with the following members.
 | `version` | string | yes | Semantic version of the element definition, per [SemVer]. |
 | `value` | any | yes | The preference value. Type determined by the element definition referenced by `type`. |
 | `source` | string | no | URI identifying the origin of this value, for provenance tracking. |
-| `updated` | string | no | RFC 3339 timestamp of last value change. |
+| `updated` | string | no | RFC 3339 timestamp of the last change to `value`. This member is preference data rather than a JWT claim, so it uses RFC 3339 rather than NumericDate. |
 
 ## 6. Value Types
 
@@ -80,7 +83,7 @@ Preferences in healthcare domains SHOULD map to resources defined in [FHIR R4B] 
 
 ### 7.2 Locale, unit, time, and currency preferences
 
-Locale preferences SHOULD use [BCP 47] language tags. Unit preferences SHOULD use [ISO 80000] identifiers. Currency preferences SHOULD use [ISO 4217] codes. Time-zone preferences SHOULD use identifiers from the [IANA Time Zone] database.
+Locale preferences SHOULD use [BCP 47] language tags. Unit preferences SHOULD use [UCUM] codes, using the case-sensitive variant. [ISO 80000] remains the authority for the definitions of quantities and units; [UCUM] supplies the machine-readable codes for them. Currency preferences SHOULD use [ISO 4217] codes. Time-zone preferences SHOULD use identifiers from the [IANA Time Zone] database.
 
 ### 7.3 Contact and communication preferences
 
@@ -98,28 +101,35 @@ Each element's `version` member identifies the version of the referenced type de
 
 ## 9. Signing
 
-### 9.1 JWS envelope
+### 9.1 JWT envelope
 
-EPS bundles transmitted over untrusted channels MUST be wrapped in a JSON Web Signature envelope per [RFC 7515]. The JWS payload is the serialized EPS bundle.
+A signed bundle is a JWT per [RFC 7519] whose Claims Set is the preference bundle. It MUST use JWS compact serialization per [RFC 7515] Section 7.1. The JOSE header MUST include `alg` (which MUST NOT be `none`), `kid`, and `typ` with the value `opi-eps+jwt` per [RFC 8725] Section 3.11.
 
 ### 9.2 Replay protection
 
-Signed bundles MUST include both the `issued` member and an `expires` member. Consumers MUST reject bundles where `expires` is in the past or `issued` is further in the future than a locally-configured skew tolerance.
+Consumers MUST reject bundles whose `exp` is in the past or whose `iat` is further in the future than a locally configured skew tolerance.
 
 ### 9.3 Key distribution
 
-Public keys used to verify EPS signatures MUST be distributable as a JWK Set per [RFC 7517] published at the https://openpreference.org/rel/keys link in the discovery document defined in [OPI-PD].
+Public keys used to verify EPS signatures MUST be published as a JWK Set per [RFC 7517] at the `https://openpreference.org/rel/keys` link in the discovery document defined in [OPI-PD]. Consumers MUST reject a bundle whose `kid` does not identify a key in that JWK Set.
+
+### 9.4 Media types
+
+A signed bundle is identified by the media type `application/opi-eps+jwt`. An unsigned bundle, which MUST NOT be delivered to a third party (Section 11), is identified by `application/opi-eps+json`. Registration of these media types with IANA is pending.
 
 ## 10. Examples (non-normative)
+
+Bundle-level `iat` and `exp` are NumericDate values (seconds since the Unix epoch) per [RFC 7519] Section 2. Element-level `updated` is preference data rather than a JWT claim and remains an RFC 3339 string.
 
 ### 10.1 Minimal bundle
 
 ```json
 {
   "schema": "https://openpreference.org/eps/0.1",
-  "subject": "acct:alice@example.com",
-  "issued": "2026-04-16T14:30:00Z",
-  "expires": "2026-04-16T15:30:00Z",
+  "iss": "https://example.com",
+  "sub": "acct:alice@example.com",
+  "iat": 1776349800,
+  "exp": 1776353400,
   "preferences": [
     {
       "type": "https://openpreference.org/eps/0.1/types/locale",
@@ -135,9 +145,10 @@ Public keys used to verify EPS signatures MUST be distributable as a JWK Set per
 ```json
 {
   "schema": "https://openpreference.org/eps/0.1",
-  "subject": "acct:alice@example.com",
-  "issued": "2026-04-16T14:30:00Z",
-  "expires": "2026-04-16T15:30:00Z",
+  "iss": "https://example.com",
+  "sub": "acct:alice@example.com",
+  "iat": 1776349800,
+  "exp": 1776353400,
   "preferences": [
     {
       "type": "https://openpreference.org/eps/0.1/types/locale",
@@ -147,7 +158,8 @@ Public keys used to verify EPS signatures MUST be distributable as a JWK Set per
     {
       "type": "https://openpreference.org/eps/0.1/types/dietary/restrictions",
       "version": "1.0.0",
-      "value": ["vegetarian"]
+      "value": ["vegetarian"],
+      "updated": "2026-03-02T09:15:00Z"
     },
     {
       "type": "https://openpreference.org/eps/0.1/types/currency",
@@ -174,8 +186,10 @@ EPS does not specify access control; that is the responsibility of [OPI-PD]. Pro
 - [RFC 3339] Date and Time on the Internet: Timestamps
 - [RFC 7515] JSON Web Signature (JWS)
 - [RFC 7517] JSON Web Key (JWK)
+- [RFC 7519] JSON Web Token (JWT)
 - [RFC 7565] The 'acct' URI Scheme
 - [RFC 8174] Ambiguity of Uppercase vs Lowercase in RFC 2119 Key Words
+- [RFC 8725] JSON Web Token Best Current Practices
 - [SemVer] Semantic Versioning 2.0.0
 
 ### 13.2 Informative
@@ -188,3 +202,4 @@ EPS does not specify access control; that is the responsibility of [OPI-PD]. Pro
 - [ISO 80000] Quantities and units
 - [IANA Time Zone] IANA Time Zone Database
 - [schema.org ContactPoint] https://schema.org/ContactPoint
+- [UCUM] The Unified Code for Units of Measure, Regenstrief Institute, https://ucum.org/ucum
