@@ -108,7 +108,7 @@ Signed bundles MUST include both the `issued` member and an `expires` member. Co
 
 ### 9.3 Key distribution
 
-Public keys used to verify EPS signatures MUST be distributable as a JWK Set per [RFC 7517] referenced from the discovery document defined in [OPI-PD].
+Public keys used to verify EPS signatures MUST be distributable as a JWK Set per [RFC 7517] published at the https://openpreference.org/rel/keys link in the discovery document defined in [OPI-PD].
 
 ## 10. Examples (non-normative)
 
