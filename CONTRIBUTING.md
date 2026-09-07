@@ -29,6 +29,8 @@ Open a pull request for:
 - Implementation of a change that has been discussed in an issue.
 - Documentation improvements outside the specifications themselves (README, governance, contributing, and similar).
 
+Write commit messages that say what changed and where, for example `OPI-TRUST: add kind and base members to distinguish delta lists`. Readers diff spec versions by commit history.
+
 ### Implementations
 
 Experimental implementations in any programming language are welcome. Implementations do not need to live in this repository. If you build one, open an issue linking to it and we will add it to an implementations list.
