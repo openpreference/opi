@@ -5,6 +5,7 @@ version: 0.1
 status: draft
 editor: Robin Monks
 issued: 2026-04-16
+revised: 2026-09-07
 tags: [open-preferences, opi, trust, draft]
 ---
 
@@ -148,7 +149,7 @@ A subscriber MUST apply a delta only when it holds the full list whose `issued` 
 {
   "schema": "https://openpreference.org/trust/0.1",
   "kind": "full",
-  "registry": "https://openpreference.org/registry/default",
+  "registry": "https://openpreference.org/trust/registry",
   "issued": "2026-04-16T00:00:00Z",
   "expires": "2026-04-23T00:00:00Z",
   "entries": [
@@ -185,7 +186,7 @@ A subscriber MUST apply a delta only when it holds the full list whose `issued` 
   "schema": "https://openpreference.org/trust/0.1",
   "kind": "delta",
   "base": "2026-04-16T00:00:00Z",
-  "registry": "https://openpreference.org/registry/default",
+  "registry": "https://openpreference.org/trust/registry",
   "issued": "2026-04-16T12:00:00Z",
   "expires": "2026-04-23T00:00:00Z",
   "entries": [

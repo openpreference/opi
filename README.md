@@ -2,9 +2,12 @@
 
 Open standards for portable, user-controlled preference data.
 
+- Website and reference implementation: [openpreference.org](https://openpreference.org)
+- Announcement: [Introducing the Open Preference Initiative](https://robinmonks.com/introducing-the-open-preference-initiative/) (8 September 2026)
+
 ## Status
 
-OPI is in early draft. All specifications are at version 0.1 and are open for comment. No conformance claims against these documents are authoritative until a version 1.0 release.
+OPI is in early draft. All specifications are at version 0.1, revised 7 September 2026, and are open for comment. No conformance claims against these documents are authoritative until a version 1.0 release.
 
 ## Specifications
 
@@ -33,7 +36,8 @@ OPI is a volunteer effort, and contributions are welcome from anyone.
 - **Read a spec** and open a GitHub issue with questions, corrections, or disagreements.
 - **Propose changes** by following the process in [CONTRIBUTING.md](CONTRIBUTING.md).
 - **Report issues** using the templates in `.github/ISSUE_TEMPLATE/` for substantive concerns, editorial fixes, or open questions.
-- **Implement** the specs experimentally in any language, and link your work back here.
+- **Implement** the specs experimentally in any language, and link your work back here. The reference implementation runs at [openpreference.org](https://openpreference.org): WebFinger discovery, signed bundles, the JWK Set, OAuth metadata, a signed trust list and a [validator](https://openpreference.org/validator) you can point at your own server.
+- **Report security issues** privately, as described in [SECURITY.md](SECURITY.md).
 
 ## Governance
 
