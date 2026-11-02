@@ -5,6 +5,7 @@ version: 0.1
 status: draft
 editor: Robin Monks
 issued: 2026-04-16
+revised: 2026-09-07
 tags: [open-preferences, opi, eps, draft]
 ---
 
@@ -140,7 +141,7 @@ Bundle-level `iat` and `exp` are NumericDate values (seconds since the Unix epoc
     {
       "type": "https://openpreference.org/eps/0.1/types/locale",
       "version": "1.0.0",
-      "value": "en-CA"
+      "value": { "language": "en-CA" }
     }
   ]
 }
@@ -159,18 +160,18 @@ Bundle-level `iat` and `exp` are NumericDate values (seconds since the Unix epoc
     {
       "type": "https://openpreference.org/eps/0.1/types/locale",
       "version": "1.0.0",
-      "value": "en-CA"
+      "value": { "language": "en-CA" }
     },
     {
-      "type": "https://openpreference.org/eps/0.1/types/dietary/restrictions",
+      "type": "https://openpreference.org/eps/0.1/types/dietary",
       "version": "1.0.0",
-      "value": ["vegetarian"],
+      "value": { "diet": "vegetarian" },
       "updated": "2026-03-02T09:15:00Z"
     },
     {
-      "type": "https://openpreference.org/eps/0.1/types/currency",
+      "type": "https://openpreference.org/eps/0.1/types/units",
       "version": "1.0.0",
-      "value": "CAD"
+      "value": { "currency": "CAD" }
     }
   ]
 }

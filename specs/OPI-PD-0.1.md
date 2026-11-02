@@ -5,6 +5,7 @@ version: 0.1
 status: draft
 editor: Robin Monks
 issued: 2026-04-16
+revised: 2026-09-07
 tags: [open-preferences, opi, pd, draft]
 ---
 
@@ -231,7 +232,7 @@ Host: example.com
     {
       "type": "https://openpreference.org/pd/0.1/authorization_details",
       "preference_types": [
-        "https://openpreference.org/eps/0.1/types/dietary/restrictions"
+        "https://openpreference.org/eps/0.1/types/dietary"
       ],
       "purpose": "Adapt menu display to dietary restrictions.",
       "retention": "PT1H"
